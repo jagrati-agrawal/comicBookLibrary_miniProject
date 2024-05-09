@@ -28,8 +28,8 @@ app.get('/signup', (req, res) => {
 
 });
 
-app.get('/signup/login', (req, res) => {
-    res.render('login');
+app.get('/dashboard', (req, res) => {
+    res.render('dashboard');
 });
 
 
@@ -43,7 +43,7 @@ app.post('/signup', async (req, res) => {
         res.send("user is already exists.Please try another username");
     }
     else {
-        v
+        
         const hashedPassword = await bcrypt.hash(data.password, saltRounds);
         data.password = hashedPassword;
 
@@ -53,28 +53,49 @@ app.post('/signup', async (req, res) => {
     }
 
 });
-
-app.post("/login",async(req,res)=>{
-    try{
-        const check=await user.findOne({name:req.body.username});
-        if(!check){
-            res.send("user not found");
-        }
-
-        const isPasswordMatch=await bcrypt.compare(req.body.password,check.password);
-        if (!isPasswordMatch) {
-            res.render("home");
+app.post("/login", async (req, res) => {
+    try {
+      const check = await user.findOne({ name: req.body.username });
+      if (!check) {
+        res.send("user not found");
+      }
+  
+      const isPasswordMatch = await bcrypt.compare(req.body.password, check.password);
+      if (!isPasswordMatch) {
+        res.send("wrong password");
+      } else {
+        res.send("login successful");
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Internal Server Error");
     }
-    else{
-        req.send("wrong password");
-    }
+  });
 
-}
-catch(err){
-    console.error(err.message);
-}
 
-})
+
+
+// app.post("/login",async(req,res)=>{
+//     try{
+//         const check=await user.findOne({name:req.body.username});
+//         if(!check){
+//             res.send("user not found");
+//         }
+
+//         const isPasswordMatch=await bcrypt.compare(req.body.password,check.password);
+//         if (!isPasswordMatch) {
+//             res.render("home");
+//     }
+//     else{
+//         req.send("wrong password");
+//     }
+
+// }
+// catch(err){
+//     console.error(err.message);
+// }
+
+// })
 
 
 
