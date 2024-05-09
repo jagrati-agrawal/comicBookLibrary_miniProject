@@ -4,6 +4,9 @@ const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const user = require('./models/user');
 const app = express();
+app.set('view engine','ejs');
+app.use(express.urlencoded({extended:false}));
+
 
 const Book = require('./models/book');
 
@@ -15,13 +18,12 @@ const Comedy=require("./models/comedy");
 const Scientific = require('./models/scientific');
 app.use(express.json());
 
-const methodOverride = require('method-override');
-app.use(methodOverride('_method'));
+// const methodOverride = require('method-override');
+// app.use(methodOverride('_method'));
 const Library = require('./models/library');
 // const seed=require('./seed');
 app.use(express.static(path.join(__dirname, 'public')));
-app.set('view engine','ejs');
-app.use(express.urlencoded({extended:true}));
+
 mongoose.connect('mongodb://127.0.0.1:27017/new-project')
     .then(()=>{
         console.log('DB conected!')
@@ -32,7 +34,7 @@ app.get('/bookapi',async (req,res)=>{
     let books = await Book.find({})
     res.json({books})
  })
- app.get('/',async(req,res)=>{
+ app.get('/explore',async(req,res)=>{
     let books=await Book.find({});
     let fantasy=await Fantasy.find({});
     let popular=await Popular.find({});
@@ -157,71 +159,59 @@ app.get('/signup', (req, res) => {
 app.get('/dashboard', (req, res) => {
     res.render('dashboard');
 });
-
+app.get('/login',(req,res)=>{
+  res.render('login');
+})
 
 app.post('/signup', async (req, res) => {
-    const data = {
-        name: req.body.username,
-        password: req.body.password
-    }
-    const existingUser = await user.findOne({ name: data.name });
-    if (existingUser) {
-        res.send("user is already exists.Please try another username");
-    }
-    else {
-        
-        const hashedPassword = await bcrypt.hash(data.password, saltRounds);
-        data.password = hashedPassword;
+  const data = {
+      name: req.body.username,
+      password: req.body.password
+  }
+  // 
+  // const userData = await user.insertMany(data);
+  // console.log(userData);
+  const existingUser = await user.findOne({ name: data.name });
+  if (existingUser) {
+      res.send("user is already exists.Please try another username");
+  }
+  else {
+      const saltRounds=10;
+      
+      
+      const hashedPassword = await bcrypt.hash(data.password, saltRounds);
+      data.password = hashedPassword;
 
-        const userData = await user.insertMany(data);
-        console.log(userData);
-       
-    }
+      const userData = await user.insertMany(data);
+      console.log(userData);
+      res.render('login');
+     
+  }
 
 });
-app.post("/login", async (req, res) => {
-    try {
-      const check = await user.findOne({ name: req.body.username });
-      if (!check) {
-        res.send("user not found");
+
+app.post("/login",async(req,res)=>{
+  try{
+      const check=await user.findOne({name: req.body.username});
+      const currUser=req.body.username;
+      if(!check){
+          res.send("user not found");
       }
-  
-      const isPasswordMatch = await bcrypt.compare(req.body.password, check.password);
-      if (!isPasswordMatch) {
-        res.send("wrong password");
-      } else {
-        res.send("login successful");
-      }
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Internal Server Error");
-    }
-  });
 
+      const isPasswordMatch=await bcrypt.compare(req.body.password,check.password);
+      if (isPasswordMatch) {
+          res.render("dashboard");
+  }
+  else{
+      req.send("wrong password");
+  }
 
+}
+catch(err){
+  console.error(err.message);
+}
 
-
-// app.post("/login",async(req,res)=>{
-//     try{
-//         const check=await user.findOne({name:req.body.username});
-//         if(!check){
-//             res.send("user not found");
-//         }
-
-//         const isPasswordMatch=await bcrypt.compare(req.body.password,check.password);
-//         if (!isPasswordMatch) {
-//             res.render("home");
-//     }
-//     else{
-//         req.send("wrong password");
-//     }
-
-// }
-// catch(err){
-//     console.error(err.message);
-// }
-
-// })
+})
 
 
 
